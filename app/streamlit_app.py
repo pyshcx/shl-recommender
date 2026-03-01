@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 # API endpoint (adjust if your backend is running elsewhere)
-API_URL = os.environ.get("API_URL", "http://localhost:8000/recommend")
+API_URL = os.environ.get("API_URL", "https://shl-recommender-cszf.onrender.com/recommend")
 
 # Custom CSS for styling
 st.markdown("""
