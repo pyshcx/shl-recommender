@@ -59,20 +59,25 @@ def generate_predictions(queries: List[str], output_csv: str):
             # 3. Extract purely the URLs for the evaluation set and enforce 10 max
             top_10_urls = [res.get("url", "") for res in final_rankings][:10]
             
-            # 4. Join the URLs via comma for the output row format
-            urls_string = ",".join(top_10_urls)
-            
-            results_rows.append({
-                "query": query,
-                "recommendations": urls_string
-            })
+            # Format requires one row per recommendation
+            if not top_10_urls:
+                results_rows.append({
+                    "Query": query,
+                    "Assessment_url": ""
+                })
+            else:
+                for url in top_10_urls:
+                    results_rows.append({
+                        "Query": query,
+                        "Assessment_url": url
+                    })
             
         except Exception as e:
             logger.error(f"Error processing query '{query}': {e}")
             # Insert a blank result so we don't offset evaluation rows
             results_rows.append({
-                "query": query,
-                "recommendations": ""
+                "Query": query,
+                "Assessment_url": ""
             })
 
     # Save to CSV
@@ -80,7 +85,7 @@ def generate_predictions(queries: List[str], output_csv: str):
     
     try:
         with open(output_csv, 'w', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ["query", "recommendations"]
+            fieldnames = ["Query", "Assessment_url"]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             
             writer.writeheader()
@@ -119,8 +124,14 @@ def main():
     queries_to_run = []
     if args.input_file and os.path.exists(args.input_file):
         logger.info(f"Loading queries from file: {args.input_file}")
-        with open(args.input_file, 'r', encoding='utf-8') as f:
-            queries_to_run = [line.strip() for line in f if line.strip()]
+        if args.input_file.endswith('.xlsx'):
+            import pandas as pd
+            df = pd.read_excel(args.input_file, sheet_name='Test-Set')
+            # Extract queries and convert to string, dropping NaNs
+            queries_to_run = [str(q) for q in df['Query'].dropna().tolist()]
+        else:
+            with open(args.input_file, 'r', encoding='utf-8') as f:
+                queries_to_run = [line.strip() for line in f if line.strip()]
     else:
         logger.info("Using default sample queries.")
         queries_to_run = default_queries

@@ -9,7 +9,6 @@ venv.bak/
 
 # Project specific
 data/raw/*.csv
-outputs/predictions.csv
 
 # DB and logs
 *.sqlite3
